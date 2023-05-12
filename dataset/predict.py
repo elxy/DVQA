@@ -24,7 +24,7 @@ class VideoPredict(Dataset):
     def __init__(self,
                  video_ref,
                  video_dis,
-                 scene_nb_frames=50,
+                 scene_nb_frames=100,
                  channel=1,
                  size_x=112,
                  size_y=112,

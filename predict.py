@@ -42,6 +42,7 @@ def parse_opts():
     parser.add_argument('--load_model', type=str, required=True, help='Path to load checkpoint')
     parser.add_argument('--log_file_name', default='./log/run.log', type=str, help='Path to save log')
 
+    parser.add_argument('--scene_nb_frames', default=100, type=int, help='number of frames for each scene')
     parser.add_argument('--channel',
                         default=1,
                         type=int,
