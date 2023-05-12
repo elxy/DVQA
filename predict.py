@@ -1,7 +1,10 @@
 import argparse
+import json
 
 import torch
 from torch.utils.data import DataLoader
+import numpy as np
+from tqdm import tqdm
 
 from dataset.predict import VideoPredict
 from model.network import C3DVQANet
@@ -14,7 +17,8 @@ def predict_model(model, device, dataloaders):
 
     epoch_preds = []
 
-    for ref, dis, in dataloaders[phase]:
+    pbar = tqdm(dataloaders[phase])
+    for ref, dis, in pbar:
         ref = ref.to(device)
         dis = dis.to(device)
 
@@ -25,13 +29,15 @@ def predict_model(model, device, dataloaders):
         with torch.no_grad():
             preds = model(ref, dis)
             preds = torch.mean(preds, 0, keepdim=True)
-            print(preds)
             epoch_preds.append(preds.flatten())
+
+            mos = float(preds.flatten().data.cpu().numpy())
+            pbar.set_postfix(MOS=mos)
 
     epoch_preds = torch.cat(epoch_preds).flatten().data.cpu().numpy()
 
     epoch_preds = epoch_preds.tolist()
-    print(sum(epoch_preds) / len(epoch_preds))
+    return epoch_preds
 
 
 def parse_opts():
@@ -39,6 +45,7 @@ def parse_opts():
     parser = argparse.ArgumentParser()
     parser.add_argument('--video_ref', type=str, help='Path to reference video')
     parser.add_argument('--video_dis', type=str, help='Path to distorion video')
+    parser.add_argument('--output', type=str, help='Path to store predict result')
     parser.add_argument('--load_model', type=str, required=True, help='Path to load checkpoint')
     parser.add_argument('--log_file_name', default='./log/run.log', type=str, help='Path to save log')
 
@@ -65,6 +72,7 @@ if __name__ == '__main__':
 
     video_ref = opt.video_ref
     video_dis = opt.video_dis
+    output = opt.output
     load_checkpoint = opt.load_model
     MULTI_GPU_MODE = opt.multi_gpu
     channel = opt.channel
@@ -102,4 +110,25 @@ if __name__ == '__main__':
     else:
         print('use {0}'.format('cuda' if torch.cuda.is_available() else 'cpu'))
 
-    predict_model(model, device, dataloaders)
+    predicts = predict_model(model, device, dataloaders)
+    predicts = np.asfarray(predicts)
+    average = np.mean(predicts)
+    std = np.std(predicts)
+    min = np.min(predicts)
+    max = np.max(predicts)
+    print(f'MOS: average {average:.2f}, std {std:.2f}, min {min:.2f}, max {max:.2f}')
+
+    if opt.output is None:
+        opt.output = 'predict_result.json'
+    info = {
+        'raw_mos': list(predicts),
+        'mos': {
+            'average': average,
+            'std': std,
+            'min': min,
+            'max': max
+        },
+        'opt': vars(opt)
+    }
+    with open(opt.output, 'wt') as f:
+        json.dump(info, f, ensure_ascii=False, indent=4)
