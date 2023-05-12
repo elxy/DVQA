@@ -41,6 +41,14 @@ Please prepare a dataset if you want to evaluate in batch or train the code from
 ```
 For the time being, only YUV is supported. We will update modules to read bitstream.
 
+## Predict video pair
+
+Invoke virtualenv and run:
+
+```
+python predict.py --multi_gpu --video_ref /path/to/ref_video --video_dis /path/to/dis_video --load_model ./save/model_pgc.pt
+```
+
 ## Eval a dataset
 
 Put all YUV files (both dis and ref) in a folder and prepare your_dataset.json accordingly. Invoke virtualenv and run:
