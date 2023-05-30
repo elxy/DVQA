@@ -43,7 +43,8 @@ class VideoPredict(Dataset):
         self.ref = VideoAV(video_ref)
         self.dis = VideoAV(video_dis)
         # check frame count and frame rate
-        assert self.ref.frame_count == self.dis.frame_count and self.ref.frame_rate == self.dis.frame_rate
+        if self.ref.frame_count != self.dis.frame_count:
+            raise RuntimeError(f'{video_ref} and {video_dis} frame count not matched!')
 
         self.frame_count = self.ref.frame_count
         self.frame_rate = self.ref.frame_rate

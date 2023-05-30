@@ -37,8 +37,12 @@ class VideoAV:
         self._frame_count = stream.frames
 
         def _get_frame_rate(stream: av.video.stream.VideoStream):
-            if stream.average_rate.denominator and stream.average_rate.numerator:
+            if stream.average_rate and stream.average_rate.denominator and stream.average_rate.numerator:
                 return float(stream.average_rate)
+            if stream.base_rate and stream.base_rate.denominator and stream.base_rate.numerator:
+                return float(stream.base_rate)
+            if stream.guessed_rate and stream.guessed_rate.denominator and stream.guessed_rate.numerator:
+                return float(stream.guessed_rate)
             if stream.time_base.denominator and stream.time_base.numerator:
                 return 1.0 / float(stream.time_base)
             else:
